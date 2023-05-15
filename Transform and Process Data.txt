@@ -1,0 +1,60 @@
+
+-- View that display  average rental per customer
+Step 1: Calculate average rental duration using function TIMESTAMPDIFF,
+        this function return the difference between given date as a day.
+Step 2: Group the average calculated by customer_id to get average rental duration
+        per customer
+Step 3: Create a view that display customer_id and the average time it took each customer to
+        return a dvd.
+CREATE VIEW rental_duration
+AS 
+SELECT customer_id,
+       AVG(TIMESTAMPDIFF(day, rental_date, return_date)) AS average_rental_duration
+FROM rental
+GROUP BY customer_id
+
+
+-- View that display number of DVDs rented per customer
+Step 1: Count total dvds rented by each customer and from which district they belong, 
+        inventory_id uniquely identifies each dvds.
+Step 2: Group the counted dvds by customer_id and district
+Step 3: Since customer_id and district belong to different tables, join the customer table
+        and address table using JOIN 
+Step 4: Create a view that displays the number of dvds rented by each customer and
+        their district.
+CREATE VIEW total_dvds
+AS 
+SELECT c.customer_id,
+       district,
+       COUNT(inventory_id) AS total_dvds_rented
+FROM address AS a
+JOIN customer AS c
+ON a.address_id = c.address_id
+JOIN rental AS r 
+ON c.customer_id = r.customer_id
+GROUP BY c.customer_id, district;
+
+-- View that display the district, total count of unique customer IDs that 
+   rented DVDs in each district, total DVDs rented, and average rental duration 
+   in each district.
+Step 1: Join address table, customer table, total_dvds view and rental duration view
+        using JOIN
+Step 2: Count customers per district using COUNT function, sum all rented dvds per district 
+        using SUM function and calculated average rental duration per district Using AVG function
+Step 3: Create a view that display district where the customer/customers belong, total
+        dvds rented and on average how long it customer/customers to return dvd/dvds in that
+        district.
+CREATE VIEW valuation_report
+AS
+SELECT a.district,
+       COUNT(c.customer_id) AS total_customers,
+       SUM(total_dvds_rented) AS total_dvds_rented,
+       AVG(average_rental_duration) AS average_rental_duration
+FROM address AS a  
+JOIN customer AS c 
+ON c.address_id = a.address_id
+JOIN total_dvds AS t 
+ON c.customer_id = t.customer_id
+JOIN rental_duration AS r 
+ON t.customer_id = r.customer_id
+GROUP BY a.district;
